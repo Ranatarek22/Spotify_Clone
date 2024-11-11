@@ -6,6 +6,8 @@ import {
   Text,
   TextInput,
   View,
+  TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import BackArrow from '../components/BackArrow';
 import CustomButton from '../components/CustomButton';
@@ -13,14 +15,27 @@ import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RootStackParamList} from '../Navigation/StackNav';
 import LinearGradient from 'react-native-linear-gradient';
+import {Formik} from 'formik';
+import * as Yup from 'yup';
 
 const logo = require('../../assets/images/logo.png');
 const hide = require('../../assets/images/Hide.png');
+const google = require('../../assets/images/google.png');
+const apple = require('../../assets/images/apple.png');
+
+// Validation schema for Yup
+const SignInSchema = Yup.object().shape({
+  email: Yup.string().email('Invalid email').required('Required'),
+  password: Yup.string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Required'),
+});
 
 const SignIn = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+
   return (
-    <View style={styles.mainContainer}>
+    <ScrollView contentContainerStyle={styles.mainContainer}>
       <StatusBar backgroundColor="transparent" translucent={true} />
       <View style={styles.nav}>
         <BackArrow />
@@ -32,27 +47,62 @@ const SignIn = () => {
           If You Need Any Support <Text style={styles.link}>Click Here</Text>
         </Text>
       </View>
-      <View style={styles.inputContainer}>
-        <TextInput placeholder="Enter Username Or Email" style={styles.input} />
-        <View style={styles.passwordContainer}>
-          <TextInput
-            placeholder="Password"
-            secureTextEntry={true}
-            style={styles.input}
-          />
+      <Formik
+        initialValues={{email: '', password: ''}}
+        validationSchema={SignInSchema}
+        onSubmit={values => {
+          navigation.navigate('ready');
+        }}>
+        {({
+          handleChange,
+          handleBlur,
+          handleSubmit,
+          values,
+          errors,
+          touched,
+        }) => (
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Enter Username Or Email"
+              style={[
+                styles.input,
+                touched.email && errors.email ? styles.errorInput : null,
+              ]}
+              onChangeText={handleChange('email')}
+              onBlur={handleBlur('email')}
+              value={values.email}
+            />
+            {touched.email && errors.email && (
+              <Text style={styles.errorText}>{errors.email}</Text>
+            )}
 
-          <Image source={hide} style={styles.eyeIcon} />
-        </View>
-      </View>
-      <Text style={styles.recoveryText}>Recovery Password</Text>
-      <View>
-        <CustomButton
-          title="Sign In"
-          onPress={() => {
-            navigation.navigate('ready');
-          }}
-        />
-      </View>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                placeholder="Password"
+                secureTextEntry={true}
+                style={[
+                  styles.input,
+                  touched.password && errors.password
+                    ? styles.errorInput
+                    : null,
+                ]}
+                onChangeText={handleChange('password')}
+                onBlur={handleBlur('password')}
+                value={values.password}
+              />
+              <Image source={hide} style={styles.eyeIcon} />
+            </View>
+            {touched.password && errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
+
+            <Text style={styles.recoveryText}>Recovery Password</Text>
+
+            <CustomButton title="Sign In" onPress={handleSubmit} />
+          </View>
+        )}
+      </Formik>
+
       <View style={styles.loginWith}>
         <LinearGradient
           colors={['#D3D3D3', '#B0B0B0']}
@@ -60,8 +110,7 @@ const SignIn = () => {
           start={{x: 0, y: 0}}
           end={{x: 1, y: 0}}
         />
-
-        <Text>OR</Text>
+        <Text style={styles.divider}>Or</Text>
         <LinearGradient
           colors={['#D3D3D3', '#B0B0B0']}
           style={styles.line}
@@ -69,13 +118,23 @@ const SignIn = () => {
           end={{x: 1, y: 0}}
         />
       </View>
-    </View>
+
+      <View style={styles.brands}>
+        <Image source={google} style={styles.brand} />
+        <Image source={apple} style={styles.brand} />
+      </View>
+      <View>
+        <Text style={styles.subTitle}>
+          Not A Member ? <Text style={styles.link}>Register Now</Text>
+        </Text>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   mainContainer: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
   },
   logo: {
@@ -109,8 +168,10 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: 15,
   },
+  divider: {
+    marginHorizontal: 10,
+  },
   input: {
-    // backgroundColor: '#fff',
     paddingVertical: 30,
     paddingHorizontal: 20,
     borderRadius: 25,
@@ -128,7 +189,6 @@ const styles = StyleSheet.create({
   eyeIcon: {
     position: 'absolute',
     right: 20,
-    color: '#666',
   },
   recoveryText: {
     alignSelf: 'flex-start',
@@ -136,10 +196,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 20,
   },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 10,
+  },
+  errorInput: {
+    borderColor: 'red',
+  },
   loginWith: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop:'8%'
+    marginTop: '8%',
   },
   line: {
     borderBottomColor: '#b6bcd4',
@@ -148,5 +216,15 @@ const styles = StyleSheet.create({
     width: '40%',
     height: 2,
   },
+  brands: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  brand: {
+    marginHorizontal: -50,
+  },
 });
+
 export default SignIn;
